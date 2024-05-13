@@ -1,4 +1,4 @@
-package com.example.whip;
+package com.airensoft.whip;
 
 import android.Manifest;
 import android.content.Intent;
@@ -19,7 +19,7 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
 
-import com.example.whip.databinding.ActivityStartBinding;
+import com.airensoft.whip.databinding.ActivityStartBinding;
 
 public class StartActivity extends AppCompatActivity implements SharedPreferences.OnSharedPreferenceChangeListener {
 

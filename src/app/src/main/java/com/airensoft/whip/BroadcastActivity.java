@@ -1,4 +1,4 @@
-package com.example.whip;
+package com.airensoft.whip;
 
 import static android.os.Environment.DIRECTORY_MOVIES;
 

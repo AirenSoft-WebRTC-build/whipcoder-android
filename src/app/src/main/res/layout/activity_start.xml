@@ -34,7 +34,7 @@
 
         <androidx.fragment.app.FragmentContainerView
             android:id="@+id/fragmentContainerView"
-            android:name="com.example.whip.SettingsFragment"
+            android:name="com.airensoft.whip.SettingsFragment"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 

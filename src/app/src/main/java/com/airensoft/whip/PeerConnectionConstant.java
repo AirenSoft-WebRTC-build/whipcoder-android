@@ -1,4 +1,4 @@
-package com.example.whip;
+package com.airensoft.whip;
 
 class PeerConnectionConstant {
     public static final String VIDEO_TRACK_ID = "ARDAMSv0";

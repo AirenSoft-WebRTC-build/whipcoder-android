@@ -8,7 +8,7 @@
  *  be found in the AUTHORS file in the root of the source tree.
  */
 
-package com.example.whip;
+package com.airensoft.whip;
 
 import android.content.Context;
 import android.util.Log;
