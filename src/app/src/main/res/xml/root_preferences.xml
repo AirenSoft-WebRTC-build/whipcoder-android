@@ -1,0 +1,121 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+>
+
+    <PreferenceCategory
+        app:title="@string/stream_settings_header"
+        app:iconSpaceReserved="false">
+
+        <EditTextPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue=""
+            app:key="stream_url"
+            app:title="@string/stream_url_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue=""
+            app:key="turn_urls"
+            app:title="@string/turn_url_title"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+
+    <PreferenceCategory
+        app:title="@string/source_settings_header"
+        app:iconSpaceReserved="false">
+        <ListPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue=""
+            app:entries="@array/capturer_source_entries"
+            app:entryValues="@array/capturer_source_values"
+            app:key="capturer_source"
+            app:title="@string/source_title"
+            app:useSimpleSummaryProvider="true" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:title="@string/video_settings_header"
+        app:iconSpaceReserved="false">
+         <ListPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="H264"
+            app:entries="@array/video_codec_entries"
+            app:entryValues="@array/video_codec_values"
+            app:key="video_codec"
+            app:title="@string/video_codec_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="1000000"
+            app:key="video_bitrate"
+            app:singleLine="true"
+            android:inputType="numberDecimal"
+            android:digits="0123456789"
+            app:title="@string/video_bitrate_title"
+            app:useSimpleSummaryProvider="true"/>
+
+        <ListPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="Default"
+            app:entries="@array/video_res_entries"
+            app:entryValues="@array/video_res_values"
+            app:key="video_res"
+            app:title="@string/video_res_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="30"
+            app:key="video_framerate"
+            app:singleLine="true"
+            android:inputType="numberDecimal"
+            android:digits="0123456789"
+            app:title="@string/video_fps_title"
+            app:useSimpleSummaryProvider="true"/>
+
+        <ListPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="0"
+            app:entries="@array/video_bframes_entries"
+            app:entryValues="@array/video_bframes_values"
+            app:key="video_bframes"
+            app:title="@string/video_bframes_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <SwitchPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="false"
+            app:key="video_cpu_overuse_detect"
+            app:title="@string/video_cpu_overuse_detect_title" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        app:title="@string/audio_settings_header"
+        app:iconSpaceReserved="false"
+        >
+        <ListPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="Opus"
+            app:entries="@array/audio_codec_entries"
+            app:entryValues="@array/audio_codec_values"
+            app:key="audio_codec"
+            app:title="@string/audio_codec_title"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="64000"
+            app:key="audio_bitrate"
+            app:singleLine="true"
+            android:inputType="numberDecimal"
+            android:digits="0123456789"
+            app:title="@string/audio_bitrate_title"
+            app:useSimpleSummaryProvider="true"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

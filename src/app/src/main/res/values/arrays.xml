@@ -1,0 +1,68 @@
+<resources>
+    <string-array name="capturer_source_entries">
+        <item>Sample1</item>
+        <item>Sample2</item>
+        <item>Sample3</item>
+        <item>Sample4</item>
+        <item>Sample5</item>
+    </string-array>
+    <string-array name="capturer_source_values">
+        <item>test.y4m</item>
+        <item>test2.y4m</item>
+        <item>test3.y4m</item>
+        <item>test4.y4m</item>
+        <item>test5.y4m</item>
+    </string-array>
+
+    <string-array name="video_codec_entries">
+        <item>H264(Baseline)</item>
+        <item>H264(High)</item>
+        <item>H265</item>
+    </string-array>
+    <string-array name="video_codec_values">
+        <item>H264 Baseline</item>
+        <item>H264 High</item>
+        <item>H265</item>
+    </string-array>
+
+    <string-array name="video_res_entries">
+        <item>Default</item>
+        <item>4K (3840x2160)</item>
+        <item>Full HD (1920x1080)</item>
+        <item>HD (1280x720)</item>
+        <item>VGA (640x480)</item>
+        <item>QVGA (320x240)</item>
+    </string-array>
+
+    <string-array name="video_res_values">
+        <item>Default</item>
+        <item>3840x2160</item>
+        <item>1920x1080</item>
+        <item>1280x720</item>
+        <item>640x480</item>
+        <item>320x240</item>
+    </string-array>
+
+    <string-array name="video_bframes_entries">
+        <item>Disabled</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="video_bframes_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+    </string-array>
+
+    <string-array name="audio_codec_entries">
+        <item>Opus</item>
+    </string-array>
+    <string-array name="audio_codec_values">
+        <item>OPUS</item>
+    </string-array>
+</resources>

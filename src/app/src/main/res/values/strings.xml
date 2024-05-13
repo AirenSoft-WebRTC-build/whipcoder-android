@@ -1,0 +1,27 @@
+<resources>
+    <string name="app_name">WebRTC WHIP Android</string>
+    <!-- Preference Titles -->
+    <string name="stream_settings_header">Stream Settings</string>
+    <string name="source_settings_header">Source Settings</string>
+    <string name="video_settings_header">Video Settings</string>
+    <string name="audio_settings_header">Audio Settings</string>
+
+    <!-- Stream Settings Preferences -->
+    <string name="stream_url_title">WHIP Endpoint Url</string>
+    <string name="turn_url_title">Turn Url</string>
+
+    <!-- Source Settings Preferences -->
+    <string name="source_title">Source</string>
+
+    <!-- Video Settings Preferences -->
+    <string name="video_codec_title">Codec</string>
+    <string name="video_bitrate_title">Max Bitrate</string>
+    <string name="video_res_title">Resolution</string>
+    <string name="video_fps_title">Framerate</string>
+    <string name="video_bframes_title">Max BFrames</string>
+    <string name="video_cpu_overuse_detect_title">CPU Overuse Detection</string>
+
+    <!-- Audio Settings Preferences -->
+    <string name="audio_codec_title">Codec</string>
+    <string name="audio_bitrate_title">Max Bitrate</string>
+</resources>
