@@ -650,6 +650,9 @@ public class PeerConnectionClient {
             String sdp = desc.description;
             if (isVideoCallEnabled()) {
                 sdp = PeerConnectionClientUtil.preferCodec(sdp, getSdpVideoCodecName(peerConnectionParameters), false);
+                sdp = setStartBitrate(
+                        PeerConnectionConstant.VIDEO_CODEC_H264, true, sdp, peerConnectionParameters.videoMaxBitrate);
+
             }
             if (peerConnectionParameters.audioStartBitrate > 0) {
                 sdp = setStartBitrate(
@@ -689,7 +692,6 @@ public class PeerConnectionClient {
             if (peerConnection == null || localVideoSender == null || isError) {
                 return;
             }
-            Log.d(TAG, "Requested max video bitrate: " + maxBitrateKbps);
             if (localVideoSender == null) {
                 Log.w(TAG, "Sender is not ready.");
                 return;
@@ -702,9 +704,9 @@ public class PeerConnectionClient {
             }
 
             for (RtpParameters.Encoding encoding : parameters.encodings) {
-                encoding.minBitrateBps = encoding.maxBitrateBps = peerConnectionParameters.videoMaxBitrate * PeerConnectionConstant.BPS_IN_KBPS;
-                encoding.bitratePriority = 2;
-                encoding.maxFramerate = peerConnectionParameters.videoFps;
+                encoding.maxBitrateBps = maxBitrateKbps * PeerConnectionConstant.BPS_IN_KBPS;
+                //encoding.minBitrateBps /= 2;
+                //encoding.maxFramerate = peerConnectionParameters.videoFps;
             }
 
             if (!localVideoSender.setParameters(parameters)) {
