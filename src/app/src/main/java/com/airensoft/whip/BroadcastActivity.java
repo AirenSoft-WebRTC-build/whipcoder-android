@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Window;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -64,6 +65,7 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         setContentView(R.layout.activity_broadcast);
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -137,7 +139,8 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         peerConnectionClient.createPeerConnectionFactory(new PeerConnectionFactory.Options());
 
         try {
-            _videoCapturer = new FileVideoCapturer(Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES) + "/test.y4m");
+            String sourceUrl = Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES) + "/" + _sharedPreferences.getString(Constants.INTENT_CAPTURER_SOURCE, "test.y4m");
+            _videoCapturer = new FileVideoCapturer(sourceUrl);
         } catch (IOException e) {
             Log.e(getClass().getName(), e.getMessage());
             Log.e(getClass().getName(), "Failed to open video file for emulated camera");
@@ -146,7 +149,7 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
 
         surfaceRenderer = findViewById(R.id.surfaceView);
         surfaceRenderer.init(eglBase.getEglBaseContext(), null);
-        surfaceRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_BALANCED);
+        surfaceRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT, RendererCommon.ScalingType.SCALE_ASPECT_FIT);
         surfaceRenderer.setEnableHardwareScaler(true /* enabled */);
 
         // Video Sink to Surface Render
@@ -187,6 +190,14 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
                 PeerConnection.IceServer.Builder bulder2 = PeerConnection.IceServer.builder(url);
                 turnServers.add(bulder2.setUsername(username).setPassword(credential).setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_SECURE).createIceServer());
             }
+        }
+
+        if(turnServers.size() > 0) {
+            _turnServers = new ArrayList<>();
+            _turnServers.addAll(turnServers);
+        }
+        else {
+            _turnServers = null;
         }
 
         return _turnServers;
@@ -259,6 +270,7 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         }
 
         SessionDescription remoteSdp = new SessionDescription(SessionDescription.Type.ANSWER, whipClient.getRemoteSDP());
+        Log.d(getClass().getName(), remoteSdp.description);
         peerConnectionClient.setRemoteDescription(remoteSdp);
     }
 

@@ -3,7 +3,7 @@ package com.airensoft.whip;
 class Constants {
 
     public static final String INTENT_STREAM_URL = "stream_url";
-    public static final String INTENT_CAPTURER_SOURCE = "CAPTURER_SOURCE";
+    public static final String INTENT_CAPTURER_SOURCE = "capturer_source";
     public static final String INTENT_VIDEO_CODEC = "video_codec";
     public static final String INTENT_VIDEO_BITRATE = "video_bitrate";
     public static final String INTENT_VIDEO_BFRAMES = "video_bframes";

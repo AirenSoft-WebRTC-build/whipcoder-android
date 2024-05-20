@@ -1,17 +1,17 @@
 <resources>
     <string-array name="capturer_source_entries">
-        <item>Sample1</item>
-        <item>Sample2</item>
-        <item>Sample3</item>
-        <item>Sample4</item>
-        <item>Sample5</item>
+        <item>01_SON_TWITCH</item>
+        <item>02_BIKE_TWITCH</item>
+        <item>03_AMUSE_TWITCH</item>
+        <item>04_FIGHTER_TWITCH</item>
+        <item>05_ROWING_TWITCH</item>
     </string-array>
     <string-array name="capturer_source_values">
-        <item>test.y4m</item>
-        <item>test2.y4m</item>
-        <item>test3.y4m</item>
-        <item>test4.y4m</item>
-        <item>test5.y4m</item>
+        <item>01_SON_TWITCH.y4m</item>
+        <item>02_BIKE_TWITCH.y4m</item>
+        <item>03_AMUSE_TWITCH.y4m</item>
+        <item>04_FIGHTER_TWITCH.y4m</item>
+        <item>05_ROWING_TWITCH.y4m</item>
     </string-array>
 
     <string-array name="video_codec_entries">

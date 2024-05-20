@@ -263,7 +263,7 @@ public class PeerConnectionClient {
     private void createPeerConnectionFactoryInternal(PeerConnectionFactory.Options options) {
         isError = false;
 
-        final AudioDeviceModule adm = createJavaAudioDevice();
+//        final AudioDeviceModule adm = createJavaAudioDevice();
 
         // Create peer connection factory.
         if (options != null) {
@@ -283,12 +283,13 @@ public class PeerConnectionClient {
 
         factory = PeerConnectionFactory.builder()
                 .setOptions(options)
-                .setAudioDeviceModule(adm)
+//                .setAudioDeviceModule(adm)
                 .setVideoEncoderFactory(encoderFactory)
-                .setVideoDecoderFactory(decoderFactory)
+//                .setVideoDecoderFactory(decoderFactory)
                 .createPeerConnectionFactory();
         Log.d(TAG, "Peer connection factory created.");
-        adm.release();
+
+//        adm.release();
     }
 
     AudioDeviceModule createJavaAudioDevice() {
@@ -419,6 +420,7 @@ public class PeerConnectionClient {
         // TCP candidates are only useful when connecting to a server that supports ICE-TCP.
         if (!_iceServers.isEmpty()) {
             Log.d(TAG, "Enable tcpCandidatePolicy");
+            rtcConfig.iceTransportsType = PeerConnection.IceTransportsType.RELAY;
             rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.ENABLED;
         } else {
             rtcConfig.tcpCandidatePolicy = PeerConnection.TcpCandidatePolicy.DISABLED;
@@ -426,6 +428,7 @@ public class PeerConnectionClient {
         rtcConfig.bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE;
         rtcConfig.rtcpMuxPolicy = PeerConnection.RtcpMuxPolicy.REQUIRE;
         rtcConfig.continualGatheringPolicy = PeerConnection.ContinualGatheringPolicy.GATHER_CONTINUALLY;
+        rtcConfig.suspendBelowMinBitrate = false;
 
         // Resolution changes depending on CPU usage
         // @enable_cpu_adaptation
@@ -479,10 +482,11 @@ public class PeerConnectionClient {
                 }
             }
         }
-//    peerConnection.addTrack(createAudioTrack(), mediaStreamLabels);
+        //    peerConnection.addTrack(createAudioTrack(), mediaStreamLabels);
 
         if (isVideoCallEnabled()) {
             findVideoSender();
+            setVideoQuality(peerConnectionParameters.videoMaxBitrate);
         }
         Log.d(TAG, "Peer connection created.");
     }
@@ -532,10 +536,6 @@ public class PeerConnectionClient {
         events.onPeerConnectionClosed();
         PeerConnectionFactory.stopInternalTracingCapture();
         PeerConnectionFactory.shutdownInternalTracer();
-    }
-
-    public boolean isHDVideo() {
-        return isVideoCallEnabled() && videoWidth * videoHeight >= 1280 * 720;
     }
 
     private void getStats() {
@@ -684,7 +684,7 @@ public class PeerConnectionClient {
         });
     }
 
-    public void setVideoMaxBitrate(@Nullable final Integer maxBitrateKbps) {
+    public void setVideoQuality(@Nullable final Integer maxBitrateKbps) {
         executor.execute(() -> {
             if (peerConnection == null || localVideoSender == null || isError) {
                 return;
@@ -702,14 +702,15 @@ public class PeerConnectionClient {
             }
 
             for (RtpParameters.Encoding encoding : parameters.encodings) {
-                // Null value means no limit.
-                encoding.maxBitrateBps = maxBitrateKbps == null ? null : maxBitrateKbps * PeerConnectionConstant.BPS_IN_KBPS;
+                encoding.minBitrateBps = encoding.maxBitrateBps = peerConnectionParameters.videoMaxBitrate * PeerConnectionConstant.BPS_IN_KBPS;
+                encoding.bitratePriority = 2;
+                encoding.maxFramerate = peerConnectionParameters.videoFps;
             }
 
             if (!localVideoSender.setParameters(parameters)) {
                 Log.e(TAG, "RtpSender.setParameters failed.");
             }
-            Log.d(TAG, "Configured max video bitrate to: " + maxBitrateKbps);
+
         });
     }
 
@@ -737,6 +738,7 @@ public class PeerConnectionClient {
         videoSource = factory.createVideoSource(false);
         capturer.initialize(surfaceTextureHelper, appContext, videoSource.getCapturerObserver());
         capturer.startCapture(videoWidth, videoHeight, videoFps);
+
 
         localVideoTrack = factory.createVideoTrack(PeerConnectionConstant.VIDEO_TRACK_ID, videoSource);
         localVideoTrack.setEnabled(renderVideo);

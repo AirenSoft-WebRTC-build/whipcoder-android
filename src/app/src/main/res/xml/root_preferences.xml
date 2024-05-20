@@ -8,7 +8,7 @@
 
         <EditTextPreference
             app:iconSpaceReserved="false"
-            app:defaultValue=""
+            app:defaultValue="http://ome-dev.airensoft.com:23333/app/stream?direction=whip&amp;transport=tcp"
             app:key="stream_url"
             app:title="@string/stream_url_title"
             app:useSimpleSummaryProvider="true" />
@@ -28,7 +28,7 @@
         app:iconSpaceReserved="false">
         <ListPreference
             app:iconSpaceReserved="false"
-            app:defaultValue=""
+            app:defaultValue="test.y4m"
             app:entries="@array/capturer_source_entries"
             app:entryValues="@array/capturer_source_values"
             app:key="capturer_source"
