@@ -149,7 +149,7 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
 
         surfaceRenderer = findViewById(R.id.surfaceView);
         surfaceRenderer.init(eglBase.getEglBaseContext(), null);
-        surfaceRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FIT, RendererCommon.ScalingType.SCALE_ASPECT_FIT);
+        surfaceRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL, RendererCommon.ScalingType.SCALE_ASPECT_FILL);
         surfaceRenderer.setEnableHardwareScaler(true /* enabled */);
 
         // Video Sink to Surface Render

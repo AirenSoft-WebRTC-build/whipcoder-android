@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">WebRTC WHIP Android</string>
+    <string name="app_name">WHIPCoder</string>
     <!-- Preference Titles -->
     <string name="stream_settings_header">Stream Settings</string>
     <string name="source_settings_header">Source Settings</string>

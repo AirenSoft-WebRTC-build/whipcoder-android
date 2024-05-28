@@ -2,16 +2,22 @@
     <string-array name="capturer_source_entries">
         <item>01_SON_TWITCH</item>
         <item>02_BIKE_TWITCH</item>
-        <item>03_AMUSE_TWITCH</item>
         <item>04_FIGHTER_TWITCH</item>
         <item>05_ROWING_TWITCH</item>
+        <item>05_ROWING(480p)_TWITCH</item>
+        <item>06_BUNNY_TWITCH</item>
+        <item>06_BUNNY(480p)_TWITCH</item>
+
     </string-array>
     <string-array name="capturer_source_values">
-        <item>01_SON_TWITCH.y4m</item>
-        <item>02_BIKE_TWITCH.y4m</item>
-        <item>03_AMUSE_TWITCH.y4m</item>
-        <item>04_FIGHTER_TWITCH.y4m</item>
-        <item>05_ROWING_TWITCH.y4m</item>
+        <item>01_SON_TIMECODE.y4m</item>
+        <item>02_BIKE_TIMECODE.y4m</item>
+        <item>04_FIGHTER_TIMECODE.y4m</item>
+        <item>05_ROWING_TIMECODE.y4m</item>
+        <item>05_ROWING_480p.y4m</item>
+        <item>06_BUNNY_TIMECODE.y4m</item>
+        <item>06_BUNNY_480p.y4m</item>
+
     </string-array>
 
     <string-array name="video_codec_entries">
@@ -19,6 +25,7 @@
         <item>H264(High)</item>
         <item>H265</item>
     </string-array>
+
     <string-array name="video_codec_values">
         <item>H264 Baseline</item>
         <item>H264 High</item>

@@ -39,5 +39,4 @@ dependencies {
     implementation libs.preference
     implementation libs.httpclient
     implementation files('libs/libwebrtc.aar')
-
 }

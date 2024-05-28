@@ -2,7 +2,7 @@
 setlocal
 
 set "file1=Z:\webrtc-build-private\webrtc-working\src\libwebrtc.aar"
-set "file2=C:\Development\webrtc-app-android-private\src\app\libs\libwebrtc.aar"
+set "file2=C:\Development\webrtc-whip-android-private\src\app\libs\libwebrtc.aar"
 
 :monitor_loop
 timeout /t 1 /nobreak >nul 2>&1

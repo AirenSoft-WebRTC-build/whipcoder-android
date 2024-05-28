@@ -650,13 +650,11 @@ public class PeerConnectionClient {
             String sdp = desc.description;
             if (isVideoCallEnabled()) {
                 sdp = PeerConnectionClientUtil.preferCodec(sdp, getSdpVideoCodecName(peerConnectionParameters), false);
-                sdp = setStartBitrate(
-                        PeerConnectionConstant.VIDEO_CODEC_H264, true, sdp, peerConnectionParameters.videoMaxBitrate);
+                sdp = setStartBitrate(PeerConnectionConstant.VIDEO_CODEC_H264, true, sdp, peerConnectionParameters.videoMaxBitrate);
 
             }
             if (peerConnectionParameters.audioStartBitrate > 0) {
-                sdp = setStartBitrate(
-                        PeerConnectionConstant.AUDIO_CODEC_OPUS, false, sdp, peerConnectionParameters.audioStartBitrate);
+                sdp = setStartBitrate(PeerConnectionConstant.AUDIO_CODEC_OPUS, false, sdp, peerConnectionParameters.audioStartBitrate);
             }
             Log.d(TAG, "Set remote SDP.\n" + sdp);
             SessionDescription sdpRemote = new SessionDescription(desc.type, sdp);
