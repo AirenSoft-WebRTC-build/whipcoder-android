@@ -35,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import android.util.Pair;
 
 public class BroadcastActivity extends AppCompatActivity implements PeerConnectionClient.PeerConnectionEvents {
 
@@ -78,13 +79,7 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         createPeerConnectionClient();
     }
 
-    private void createPeerConnectionClient() {
-        if (peerConnectionClient != null) {
-            peerConnectionClient.stopVideoSource();
-            peerConnectionClient.close();
-            peerConnectionClient = null;
-        }
-
+    private Pair<Integer, Integer> GetVideoSize() {
         int videoWidth = 0;
         int videoHeight = 0;
         switch (_sharedPreferences.getString(Constants.INTENT_VIDEO_RES, "default")) {
@@ -112,11 +107,17 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
                 break;
         }
 
-        peerConnectionParameters = new PeerConnectionParameters(
+        return new Pair<>(videoWidth, videoHeight);
+    }
+
+    private PeerConnectionParameters createPeerConnectionParameters() {
+        Pair<Integer, Integer> videoSize = GetVideoSize();
+
+        return new PeerConnectionParameters(
                 true,               // videoCallEnabled
                 false,              // tracing
-                videoWidth,                // videoWidth
-                videoHeight,               // videoHeight
+                videoSize.first,    // videoWidth
+                videoSize.second,   // videoHeight
                 Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_VIDEO_FRAMERATE, "30")),       // videoFps
                 Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_VIDEO_BITRATE, "1000000")),    // videoMaxBitrate
                 _sharedPreferences.getString(Constants.INTENT_VIDEO_CODEC, ""),        // videoCodec
@@ -134,19 +135,53 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
                 false,              // enableRtcEventLog
                 _sharedPreferences.getBoolean(Constants.INTENT_VIDEO_CPU_OVERUSE_DETECTION, false) // enableCpuOveruseDetection
         );
+    }
+
+    private List<PeerConnection.IceServer> loadTurnServer() {
+        List<PeerConnection.IceServer> turnServers = new ArrayList<>();
+
+        // Read TURN server information stored in Preference
+        if (_sharedPreferences != null && _sharedPreferences.contains(Constants.INTENT_TURN_URLS)) {
+            String turnUrls = _sharedPreferences.getString(Constants.INTENT_TURN_URLS, "");
+
+            List<String> turns = Arrays.asList(turnUrls.split("\\|"));
+
+            for (String turn : turns) {
+                if (turn.isEmpty())
+                    continue;
+
+                String[] tokens = turn.split("; ");
+                Log.d(getClass().getName(), turn);
+                String url = tokens[0].replace("<", "").replace(">", "");
+                String username = tokens[2].split("=")[1].replaceAll("\"", "");
+                String credential = tokens[3].split("=")[1].replaceAll("\"", "");
+//                Log.d(getClass().getName(), String.format("%s %s %s", url, username, credential));
+                PeerConnection.IceServer.Builder bulder2 = PeerConnection.IceServer.builder(url);
+                turnServers.add(bulder2.setUsername(username).setPassword(credential).setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_SECURE).createIceServer());
+            }
+        }
+
+        return turnServers;
+    }
+
+    private void createPeerConnectionClient() {
+        releasePeerConnectionClient();
+
+        peerConnectionParameters = createPeerConnectionParameters();
 
         peerConnectionClient = new PeerConnectionClient(getApplicationContext(), eglBase, peerConnectionParameters, BroadcastActivity.this);
         peerConnectionClient.createPeerConnectionFactory(new PeerConnectionFactory.Options());
 
+        // Media Source
         try {
             String sourceUrl = Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES) + "/" + _sharedPreferences.getString(Constants.INTENT_CAPTURER_SOURCE, "test.y4m");
             _videoCapturer = new FileVideoCapturer(sourceUrl);
         } catch (IOException e) {
-            Log.e(getClass().getName(), e.getMessage());
-            Log.e(getClass().getName(), "Failed to open video file for emulated camera");
+            Log.e(getClass().getName(), "Failed to open video file for emulated camera " + e.getMessage());
             return;
         }
 
+        // Set Renderer
         surfaceRenderer = findViewById(R.id.surfaceView);
         surfaceRenderer.init(eglBase.getEglBaseContext(), null);
         surfaceRenderer.setScalingType(RendererCommon.ScalingType.SCALE_ASPECT_FILL, RendererCommon.ScalingType.SCALE_ASPECT_FILL);
@@ -160,47 +195,9 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         _turnServers = loadTurnServer();
 
         peerConnectionClient.createPeerConnection(localProxyVideoSink, _videoCapturer, _turnServers);
+
+
         peerConnectionClient.createOffer();
-    }
-
-    private List<PeerConnection.IceServer> loadTurnServer() {
-        List<PeerConnection.IceServer> turnServers = new ArrayList<>();
-
-        // Read TURN server information stored in Preference
-        if (_sharedPreferences != null && _sharedPreferences.contains(Constants.INTENT_TURN_URLS)) {
-            String turnUrls = _sharedPreferences.getString(Constants.INTENT_TURN_URLS, "");
-            Log.e(getClass().getName(), turnUrls);
-
-            List<String> turns = Arrays.asList(turnUrls.split("\\|"));
-
-
-            for (String turn : turns) {
-                if (turn.isEmpty())
-                    continue;
-
-                Log.e(getClass().getName(), turn);
-
-                String[] tokens = turn.split("; ");
-                Log.d(getClass().getName(), turn);
-                String url = tokens[0].replace("<", "").replace(">", "");
-                String username = tokens[2].split("=")[1].replaceAll("\"", "");
-                String credential = tokens[3].split("=")[1].replaceAll("\"", "");
-
-                Log.e(getClass().getName(), String.format("%s %s %s", url, username, credential));
-                PeerConnection.IceServer.Builder bulder2 = PeerConnection.IceServer.builder(url);
-                turnServers.add(bulder2.setUsername(username).setPassword(credential).setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_SECURE).createIceServer());
-            }
-        }
-
-        if(turnServers.size() > 0) {
-            _turnServers = new ArrayList<>();
-            _turnServers.addAll(turnServers);
-        }
-        else {
-            _turnServers = null;
-        }
-
-        return _turnServers;
     }
 
     private static class ProxyVideoSink implements VideoSink {
@@ -221,14 +218,17 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         }
     }
 
-
-    @Override
-    protected void onStop() {
+    private void releasePeerConnectionClient() {
         if (peerConnectionClient != null) {
             peerConnectionClient.stopVideoSource();
             peerConnectionClient.close();
             peerConnectionClient = null;
         }
+    }
+
+    @Override
+    protected void onStop() {
+        releasePeerConnectionClient();
 
         if (whipClient != null) {
             whipClient.Delete();
@@ -250,8 +250,7 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
      **********************************************************************************************/
     @Override
     public void onLocalDescription(SessionDescription sdp) {
-        Log.d(getClass().getName(), "onLocalDescription");
-        Log.d(getClass().getName(), sdp.description);
+        Log.d(getClass().getName(), "onLocalDescription " + sdp.description);
 
         // Received TURN server information from WHIP
         whipClient = new WHIPClient();

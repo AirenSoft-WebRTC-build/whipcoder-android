@@ -96,4 +96,98 @@ class PeerConnectionClientUtil {
         return buffer.toString();
     }
 
+    public static String setStartBitrate(
+            String codec, boolean isVideoCodec, String sdp, int bitrateKbps) {
+        String[] lines = sdp.split("\r\n");
+        int rtpmapLineIndex = -1;
+        boolean sdpFormatUpdated = false;
+        String codecRtpMap = null;
+        // Search for codec rtpmap in format
+        // a=rtpmap:<payload type> <encoding name>/<clock rate> [/<encoding parameters>]
+        String regex = "^a=rtpmap:(\\d+) " + codec + "(/\\d+)+[\r]?$";
+        Pattern codecPattern = Pattern.compile(regex);
+        for (int i = 0; i < lines.length; i++) {
+            Matcher codecMatcher = codecPattern.matcher(lines[i]);
+            if (codecMatcher.matches()) {
+                codecRtpMap = codecMatcher.group(1);
+                rtpmapLineIndex = i;
+                break;
+            }
+        }
+        if (codecRtpMap == null) {
+            Log.w(TAG, "No rtpmap for " + codec + " codec");
+            return sdp;
+        }
+        Log.d(TAG, "Found " + codec + " rtpmap " + codecRtpMap + " at " + lines[rtpmapLineIndex]);
+
+        // Check if a=fmtp string already exist in remote SDP for this codec and
+        // update it with new bitrate parameter.
+        regex = "^a=fmtp:" + codecRtpMap + " \\w+=\\d+.*[\r]?$";
+        codecPattern = Pattern.compile(regex);
+        for (int i = 0; i < lines.length; i++) {
+            Matcher codecMatcher = codecPattern.matcher(lines[i]);
+            if (codecMatcher.matches()) {
+                Log.d(TAG, "Found " + codec + " " + lines[i]);
+                if (isVideoCodec) {
+                    lines[i] += "; " + PeerConnectionConstant.VIDEO_CODEC_PARAM_START_BITRATE + "=" + bitrateKbps;
+                } else {
+                    lines[i] += "; " + PeerConnectionConstant.AUDIO_CODEC_PARAM_BITRATE + "=" + (bitrateKbps * 1000);
+                }
+                Log.d(TAG, "Update remote SDP line: " + lines[i]);
+                sdpFormatUpdated = true;
+                break;
+            }
+        }
+
+        StringBuilder newSdpDescription = new StringBuilder();
+        for (int i = 0; i < lines.length; i++) {
+            newSdpDescription.append(lines[i]).append("\r\n");
+            // Append new a=fmtp line if no such line exist for a codec.
+            if (!sdpFormatUpdated && i == rtpmapLineIndex) {
+                String bitrateSet;
+                if (isVideoCodec) {
+                    bitrateSet =
+                            "a=fmtp:" + codecRtpMap + " " + PeerConnectionConstant.VIDEO_CODEC_PARAM_START_BITRATE + "=" + bitrateKbps;
+                } else {
+                    bitrateSet = "a=fmtp:" + codecRtpMap + " " + PeerConnectionConstant.AUDIO_CODEC_PARAM_BITRATE + "="
+                            + (bitrateKbps * 1000);
+                }
+                Log.d(TAG, "Add remote SDP line: " + bitrateSet);
+                newSdpDescription.append(bitrateSet).append("\r\n");
+            }
+        }
+        return newSdpDescription.toString();
+    }
+
+    public static String getSdpVideoCodecName(PeerConnectionParameters parameters) {
+        switch (parameters.videoCodec) {
+            case PeerConnectionConstant.VIDEO_CODEC_VP8:
+                return PeerConnectionConstant.VIDEO_CODEC_VP8;
+            case PeerConnectionConstant.VIDEO_CODEC_VP9:
+                return PeerConnectionConstant.VIDEO_CODEC_VP9;
+            case PeerConnectionConstant.VIDEO_CODEC_AV1:
+                return PeerConnectionConstant.VIDEO_CODEC_AV1;
+            case PeerConnectionConstant.VIDEO_CODEC_H264_HIGH:
+            case PeerConnectionConstant.VIDEO_CODEC_H264_BASELINE:
+                return PeerConnectionConstant.VIDEO_CODEC_H264;
+            case PeerConnectionConstant.VIDEO_CODEC_H265:
+                return PeerConnectionConstant.VIDEO_CODEC_H265;
+            default:
+                return PeerConnectionConstant.VIDEO_CODEC_VP8;
+        }
+    }
+
+    public static String getFieldTrials(PeerConnectionParameters peerConnectionParameters) {
+        String fieldTrials = "";
+        if (peerConnectionParameters.videoFlexfecEnabled) {
+            fieldTrials += PeerConnectionConstant.VIDEO_FLEXFEC_FIELDTRIAL;
+            Log.d(TAG, "Enable FlexFEC field trial.");
+        }
+        if (peerConnectionParameters.disableWebRtcAGCAndHPF) {
+            fieldTrials += PeerConnectionConstant.DISABLE_WEBRTC_AGC_FIELDTRIAL;
+            Log.d(TAG, "Disable WebRTC AGC field trial.");
+        }
+        return fieldTrials;
+    }
+
 }
