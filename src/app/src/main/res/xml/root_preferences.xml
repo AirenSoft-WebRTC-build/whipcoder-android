@@ -92,6 +92,12 @@
             app:key="video_cpu_overuse_detect"
             app:title="@string/video_cpu_overuse_detect_title" />
 
+        <SwitchPreference
+            app:iconSpaceReserved="false"
+            app:defaultValue="false"
+            app:key="video_simulcast"
+            app:title="@string/video_simulcast_title" />
+
     </PreferenceCategory>
 
     <PreferenceCategory

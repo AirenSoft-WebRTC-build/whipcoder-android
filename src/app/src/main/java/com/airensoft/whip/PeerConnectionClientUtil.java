@@ -1,6 +1,7 @@
 package com.airensoft.whip;
 
 import android.util.Log;
+import android.util.Pair;
 
 import androidx.annotation.Nullable;
 
@@ -159,8 +160,8 @@ class PeerConnectionClientUtil {
         return newSdpDescription.toString();
     }
 
-    public static String getSdpVideoCodecName(PeerConnectionParameters parameters) {
-        switch (parameters.videoCodec) {
+    public static String getSdpVideoCodecName(String videoCodec) {
+        switch (videoCodec) {
             case PeerConnectionConstant.VIDEO_CODEC_VP8:
                 return PeerConnectionConstant.VIDEO_CODEC_VP8;
             case PeerConnectionConstant.VIDEO_CODEC_VP9:
@@ -177,6 +178,18 @@ class PeerConnectionClientUtil {
         }
     }
 
+    public static String getProfileLevelId(String videoCodec) {
+        switch (videoCodec) {
+            case PeerConnectionConstant.VIDEO_CODEC_H264_HIGH:
+                return "640c";
+            case PeerConnectionConstant.VIDEO_CODEC_H264_BASELINE:
+                return "42e0";
+            default:
+                break;
+        }
+        return null;
+    }
+
     public static String getFieldTrials(PeerConnectionParameters peerConnectionParameters) {
         String fieldTrials = "";
         if (peerConnectionParameters.videoFlexfecEnabled) {
@@ -187,7 +200,40 @@ class PeerConnectionClientUtil {
             fieldTrials += PeerConnectionConstant.DISABLE_WEBRTC_AGC_FIELDTRIAL;
             Log.d(TAG, "Disable WebRTC AGC field trial.");
         }
+
+        fieldTrials += PeerConnectionConstant.LEGACY_SIMULCAST_LAYER_LIMIT_FIELDTRIAL;
+        fieldTrials += PeerConnectionConstant.SPSPPSIDR_IS_H264_KEYFRAME_FIELDTRIAL;
+        fieldTrials += PeerConnectionConstant.VIDEO_LAYERS_ALLOCATION_ADVERTISED_FIELDTRIAL;
+
         return fieldTrials;
     }
 
+    static public Pair<Integer, Integer> GetVideoSize(String resolution) {
+        int videoWidth = 0;
+        int videoHeight = 0;
+        switch (resolution) {
+            case "3840x2160":
+                videoWidth = 3840;
+                videoHeight = 2160;
+                break;
+            case "1920x1080":
+                videoWidth = 1920;
+                videoHeight = 1080;
+                break;
+            case "1280x720":
+                videoWidth = 1280;
+                videoHeight = 720;
+                break;
+            case "640x480":
+                videoWidth = 640;
+                videoHeight = 480;
+                break;
+            case "320x240":
+            default:
+                videoWidth = 320;
+                videoHeight = 240;
+                break;
+        }
+        return new Pair<>(videoWidth, videoHeight);
+    }
 }

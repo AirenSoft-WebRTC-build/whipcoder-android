@@ -20,6 +20,7 @@
     <string name="video_fps_title">Framerate</string>
     <string name="video_bframes_title">Max BFrames</string>
     <string name="video_cpu_overuse_detect_title">CPU Overuse Detection</string>
+    <string name="video_simulcast_title">Simulcast</string>
 
     <!-- Audio Settings Preferences -->
     <string name="audio_codec_title">Codec</string>

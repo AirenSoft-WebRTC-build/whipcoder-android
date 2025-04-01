@@ -1,0 +1,28 @@
+    public void setVideoQuality(@Nullable final Integer maxBitrateKbps) {
+        executor.execute(() -> {
+            if (peerConnection == null || localVideoSender == null || isError) {
+                return;
+            }
+            if (localVideoSender == null) {
+                Log.w(TAG, "Sender is not ready.");
+                return;
+            }
+
+            RtpParameters parameters = localVideoSender.getParameters();
+            if (parameters.encodings.size() == 0) {
+                Log.w(TAG, "RtpParameters are not ready.");
+                return;
+            }
+
+            for (RtpParameters.Encoding encoding : parameters.encodings) {
+                encoding.maxBitrateBps = maxBitrateKbps * PeerConnectionConstant.BPS_IN_KBPS;
+                //encoding.minBitrateBps /= 2;
+                //encoding.maxFramerate = peerConnectionParameters.videoFps;
+            }
+
+            if (!localVideoSender.setParameters(parameters)) {
+                Log.e(TAG, "RtpSender.setParameters failed.");
+            }
+
+        });
+    }

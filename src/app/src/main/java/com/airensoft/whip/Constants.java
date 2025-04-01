@@ -9,6 +9,7 @@ class Constants {
     public static final String INTENT_VIDEO_BFRAMES = "video_bframes";
     public static final String INTENT_VIDEO_FRAMERATE = "video_framerate";
     public static final String INTENT_VIDEO_CPU_OVERUSE_DETECTION = "video_cpu_overuse_detect";
+    public static final String INTENT_VIDEO_SIMULCAST = "video_simulcast";
     public static final String INTENT_VIDEO_RES = "video_res";
     public static final String INTENT_AUDIO_CODEC = "audio_codec";
     public static final String INTENT_AUDIO_BITRATE = "audio_bitrate";

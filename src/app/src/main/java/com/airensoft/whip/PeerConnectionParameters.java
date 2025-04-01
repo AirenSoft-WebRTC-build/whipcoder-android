@@ -14,10 +14,10 @@ public class PeerConnectionParameters {
     public final int maxBFrames;
     public final boolean videoCodecHwAcceleration;
     public final boolean videoFlexfecEnabled;
+    public final boolean videoSimulcastEnabled;
     public final int audioStartBitrate;
     public final String audioCodec;
     public final boolean noAudioProcessing;
-    public final boolean saveInputAudioToFile;
     public final boolean disableBuiltInAEC;
     public final boolean disableBuiltInAGC;
     public final boolean disableBuiltInNS;
@@ -27,8 +27,8 @@ public class PeerConnectionParameters {
 
     public PeerConnectionParameters(boolean videoCallEnabled, boolean tracing,
                                     int videoWidth, int videoHeight, int videoFps, int videoMaxBitrate, String videoCodec, int maxBFrames,
-                                    boolean videoCodecHwAcceleration, boolean videoFlexfecEnabled, int audioStartBitrate,
-                                    String audioCodec, boolean noAudioProcessing, boolean saveInputAudioToFile,
+                                    boolean videoCodecHwAcceleration, boolean videoFlexfecEnabled, boolean videoSimulcastEnabled,
+                                    int audioStartBitrate, String audioCodec, boolean noAudioProcessing,
                                     boolean disableBuiltInAEC, boolean disableBuiltInAGC,
                                     boolean disableBuiltInNS, boolean disableWebRtcAGCAndHPF, boolean enableRtcEventLog, boolean enableCpuOveruseDetection) {
         this.videoCallEnabled = videoCallEnabled;
@@ -38,13 +38,13 @@ public class PeerConnectionParameters {
         this.videoFps = videoFps;
         this.videoMaxBitrate = videoMaxBitrate;
         this.videoCodec = videoCodec;
+        this.videoSimulcastEnabled = videoSimulcastEnabled;
         this.maxBFrames = maxBFrames;
         this.videoFlexfecEnabled = videoFlexfecEnabled;
         this.videoCodecHwAcceleration = videoCodecHwAcceleration;
         this.audioStartBitrate = audioStartBitrate;
         this.audioCodec = audioCodec;
         this.noAudioProcessing = noAudioProcessing;
-        this.saveInputAudioToFile = saveInputAudioToFile;
         this.disableBuiltInAEC = disableBuiltInAEC;
         this.disableBuiltInAGC = disableBuiltInAGC;
         this.disableBuiltInNS = disableBuiltInNS;

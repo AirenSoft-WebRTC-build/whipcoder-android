@@ -35,17 +35,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
 import android.util.Pair;
 
-public class BroadcastActivity extends AppCompatActivity implements PeerConnectionClient.PeerConnectionEvents {
+public class BroadcastActivity extends AppCompatActivity implements PeerConnectionEvents {
 
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
 
     @Nullable
     private PeerConnectionClient peerConnectionClient = null;
-
-    @Nullable
-    private PeerConnectionParameters peerConnectionParameters = null;
 
     @Nullable
     private SurfaceViewRenderer surfaceRenderer;
@@ -79,61 +77,50 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         createPeerConnectionClient();
     }
 
-    private Pair<Integer, Integer> GetVideoSize() {
-        int videoWidth = 0;
-        int videoHeight = 0;
-        switch (_sharedPreferences.getString(Constants.INTENT_VIDEO_RES, "default")) {
-            case "3840x2160":
-                videoWidth = 3840;
-                videoHeight = 2160;
-                break;
-            case "1920x1080":
-                videoWidth = 1920;
-                videoHeight = 1080;
-                break;
-            case "1280x720":
-                videoWidth = 1280;
-                videoHeight = 720;
-                break;
-            case "640x480":
-                videoWidth = 640;
-                videoHeight = 480;
-                break;
-            case "320x240":
-                videoWidth = 320;
-                videoHeight = 240;
-                break;
-            default:
-                break;
-        }
-
-        return new Pair<>(videoWidth, videoHeight);
-    }
-
     private PeerConnectionParameters createPeerConnectionParameters() {
-        Pair<Integer, Integer> videoSize = GetVideoSize();
+        Pair<Integer, Integer> videoSize = PeerConnectionClientUtil.GetVideoSize(_sharedPreferences.getString(Constants.INTENT_VIDEO_RES, "default"));
 
         return new PeerConnectionParameters(
-                true,               // videoCallEnabled
-                false,              // tracing
-                videoSize.first,    // videoWidth
-                videoSize.second,   // videoHeight
-                Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_VIDEO_FRAMERATE, "30")),       // videoFps
-                Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_VIDEO_BITRATE, "1000000")),    // videoMaxBitrate
-                _sharedPreferences.getString(Constants.INTENT_VIDEO_CODEC, ""),        // videoCodec
-                Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_VIDEO_BFRAMES, "0")),          // maxBFrames
-                true,               // videoCodecHwAcceleration
-                false,              // videoFlexfecEnabled
-                Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_AUDIO_BITRATE, "64000")),      // audioStartBitrate
-                _sharedPreferences.getString(Constants.INTENT_AUDIO_CODEC, ""),        // audioCodec
-                true,               // noAudioProcessing
-                false,              // saveInputAudioToFile
-                true,               // disableBuiltInAEC
-                true,               // disableBuiltInAGC
-                true,               // disableBuiltInNS
-                true,               // disableWebRtcAGCAndHPF
-                false,              // enableRtcEventLog
-                _sharedPreferences.getBoolean(Constants.INTENT_VIDEO_CPU_OVERUSE_DETECTION, false) // enableCpuOveruseDetection
+                // videoCallEnabled
+                true,
+                // tracing
+                false,
+                // videoWidth
+                videoSize.first,
+                // videoHeight
+                videoSize.second,
+                // videoFps
+                Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_VIDEO_FRAMERATE, "30")),
+                // videoMaxBitrate
+                Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_VIDEO_BITRATE, "1000000")),
+                // Prefer VideoCodec
+                _sharedPreferences.getString(Constants.INTENT_VIDEO_CODEC, ""),
+                // maxBFrames
+                Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_VIDEO_BFRAMES, "0")),
+                // videoCodecHwAcceleration
+                true,
+                // videoFlexfecEnabled
+                false,
+                // simulcastEnabled
+                _sharedPreferences.getBoolean(Constants.INTENT_VIDEO_SIMULCAST,false),
+                // audioStartBitrate
+                Integer.parseInt(_sharedPreferences.getString(Constants.INTENT_AUDIO_BITRATE, "64000")),
+                // PreferAudioCodec
+                _sharedPreferences.getString(Constants.INTENT_AUDIO_CODEC, ""),
+                // noAudioProcessing
+                true,
+                // disableBuiltInAEC
+                true,
+                // disableBuiltInAGC
+                true,
+                // disableBuiltInNS
+                true,
+                // disableWebRtcAGCAndHPF
+                true,
+                // enableRtcEventLog
+                false,
+                // enableCpuOveruseDetection
+                _sharedPreferences.getBoolean(Constants.INTENT_VIDEO_CPU_OVERUSE_DETECTION, false)
         );
     }
 
@@ -147,15 +134,13 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
             List<String> turns = Arrays.asList(turnUrls.split("\\|"));
 
             for (String turn : turns) {
-                if (turn.isEmpty())
-                    continue;
+                if (turn.isEmpty()) continue;
 
                 String[] tokens = turn.split("; ");
                 Log.d(getClass().getName(), turn);
                 String url = tokens[0].replace("<", "").replace(">", "");
                 String username = tokens[2].split("=")[1].replaceAll("\"", "");
                 String credential = tokens[3].split("=")[1].replaceAll("\"", "");
-//                Log.d(getClass().getName(), String.format("%s %s %s", url, username, credential));
                 PeerConnection.IceServer.Builder bulder2 = PeerConnection.IceServer.builder(url);
                 turnServers.add(bulder2.setUsername(username).setPassword(credential).setTlsCertPolicy(PeerConnection.TlsCertPolicy.TLS_CERT_POLICY_SECURE).createIceServer());
             }
@@ -167,14 +152,9 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
     private void createPeerConnectionClient() {
         releasePeerConnectionClient();
 
-        peerConnectionParameters = createPeerConnectionParameters();
-
-        peerConnectionClient = new PeerConnectionClient(getApplicationContext(), eglBase, peerConnectionParameters, BroadcastActivity.this);
-        peerConnectionClient.createPeerConnectionFactory(new PeerConnectionFactory.Options());
-
         // Media Source
         try {
-            String sourceUrl = Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES) + "/" + _sharedPreferences.getString(Constants.INTENT_CAPTURER_SOURCE, "test.y4m");
+            String sourceUrl = Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES) + "/" + _sharedPreferences.getString(Constants.INTENT_CAPTURER_SOURCE, "test2.y4m");
             _videoCapturer = new FileVideoCapturer(sourceUrl);
         } catch (IOException e) {
             Log.e(getClass().getName(), "Failed to open video file for emulated camera " + e.getMessage());
@@ -194,9 +174,10 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         // Read TURN server information stored in Preference
         _turnServers = loadTurnServer();
 
+        // Create PeerConnection
+        PeerConnectionParameters peerConnectionParameters = createPeerConnectionParameters();
+        peerConnectionClient = new PeerConnectionClient(getApplicationContext(), eglBase, peerConnectionParameters, BroadcastActivity.this);
         peerConnectionClient.createPeerConnection(localProxyVideoSink, _videoCapturer, _turnServers);
-
-
         peerConnectionClient.createOffer();
     }
 
@@ -206,7 +187,6 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         @Override
         synchronized public void onFrame(VideoFrame frame) {
             if (target == null) {
-//                Logging.d(getClass().getName(), "Dropping frame in proxy because target is null.");
                 return;
             }
 
@@ -250,8 +230,6 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
      **********************************************************************************************/
     @Override
     public void onLocalDescription(SessionDescription sdp) {
-        Log.d(getClass().getName(), "onLocalDescription " + sdp.description);
-
         // Received TURN server information from WHIP
         whipClient = new WHIPClient();
         whipClient.setURL(_sharedPreferences.getString(Constants.INTENT_STREAM_URL, ""));
@@ -269,7 +247,6 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         }
 
         SessionDescription remoteSdp = new SessionDescription(SessionDescription.Type.ANSWER, whipClient.getRemoteSDP());
-        Log.d(getClass().getName(), remoteSdp.description);
         peerConnectionClient.setRemoteDescription(remoteSdp);
     }
 
