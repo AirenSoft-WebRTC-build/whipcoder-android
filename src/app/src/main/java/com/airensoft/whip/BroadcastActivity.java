@@ -2,6 +2,7 @@ package com.airensoft.whip;
 
 import static android.os.Environment.DIRECTORY_MOVIES;
 
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Environment;
@@ -10,6 +11,7 @@ import android.view.KeyEvent;
 import android.view.Window;
 
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -20,7 +22,6 @@ import org.webrtc.EglBase;
 import org.webrtc.FileVideoCapturer;
 import org.webrtc.IceCandidate;
 import org.webrtc.PeerConnection;
-import org.webrtc.PeerConnectionFactory;
 import org.webrtc.RTCStatsReport;
 import org.webrtc.RendererCommon;
 import org.webrtc.SessionDescription;
@@ -29,6 +30,7 @@ import org.webrtc.VideoCapturer;
 import org.webrtc.VideoFrame;
 import org.webrtc.VideoSink;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -155,6 +157,25 @@ public class BroadcastActivity extends AppCompatActivity implements PeerConnecti
         // Media Source
         try {
             String sourceUrl = Environment.getExternalStoragePublicDirectory(DIRECTORY_MOVIES) + "/" + _sharedPreferences.getString(Constants.INTENT_CAPTURER_SOURCE, "test2.y4m");
+
+            // File Check
+            File file = new File(sourceUrl);
+            if(!file.exists())
+            {
+                AlertDialog.Builder builder = new AlertDialog.Builder(BroadcastActivity.this)
+                        .setMessage(String.format("Not found file : %s", sourceUrl))
+                        .setPositiveButton("Go back", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                                finish();
+                            }
+                        });
+                AlertDialog msgDialog = builder.create();
+                msgDialog.show();
+                return;
+            }
+
             _videoCapturer = new FileVideoCapturer(sourceUrl);
         } catch (IOException e) {
             Log.e(getClass().getName(), "Failed to open video file for emulated camera " + e.getMessage());
