@@ -1,0 +1,293 @@
+diff --git a/sdk/android/BUILD.gn b/sdk/android/BUILD.gn
+index 50aa9a8948..c673d5f7b5 100644
+--- a/sdk/android/BUILD.gn
++++ b/sdk/android/BUILD.gn
+@@ -554,6 +554,8 @@ if (is_android) {
+     sources = [
+       "api/org/webrtc/SoftwareVideoDecoderFactory.java",
+       "api/org/webrtc/SoftwareVideoEncoderFactory.java",
++      "api/org/webrtc/SimulcastVideoEncoder.java",
++      "api/org/webrtc/SimulcastVideoEncoderFactory.java",
+     ]
+ 
+     deps = [
+@@ -895,6 +897,21 @@ if (current_os == "linux" || is_android) {
+     ]
+   }
+ 
++  rtc_library("simulcast_jni") {
++    visibility = [ "*" ]
++    allow_poison = [ "software_video_codecs" ]
++    sources = [
++      "src/jni/simulcast_video_encoder.cc",
++      "src/jni/simulcast_video_encoder.h"
++    ]
++    deps = [
++      ":base_jni",
++      ":video_jni",
++      ":native_api_codecs",
++      "../../media:rtc_simulcast_encoder_adapter"
++    ]
++  }
++
+   rtc_library("libaom_av1_encoder_jni") {
+     visibility = [ "*" ]
+     allow_poison = [ "software_video_codecs" ]
+@@ -932,6 +949,7 @@ if (current_os == "linux" || is_android) {
+       ":generated_swcodecs_jni",
+       ":libvpx_vp8_jni",
+       ":libvpx_vp9_jni",
++      ":simulcast_jni",
+       ":native_api_jni",
+       ":video_jni",
+       "../../api/environment",
+diff --git a/sdk/android/api/org/webrtc/HardwareVideoEncoderFactory.java b/sdk/android/api/org/webrtc/HardwareVideoEncoderFactory.java
+index bdb10e9698..a870f2d5d6 100644
+--- a/sdk/android/api/org/webrtc/HardwareVideoEncoderFactory.java
++++ b/sdk/android/api/org/webrtc/HardwareVideoEncoderFactory.java
+@@ -13,6 +13,7 @@ package org.webrtc;
+ import static org.webrtc.MediaCodecUtils.EXYNOS_PREFIX;
+ import static org.webrtc.MediaCodecUtils.INTEL_PREFIX;
+ import static org.webrtc.MediaCodecUtils.QCOM_PREFIX;
++import static org.webrtc.MediaCodecUtils.C2_PREFIX;
+ 
+ import android.media.MediaCodecInfo;
+ import android.media.MediaCodecList;
+@@ -197,6 +198,7 @@ public class HardwareVideoEncoderFactory implements VideoEncoderFactory {
+       case H264:
+         return isHardwareSupportedInCurrentSdkH264(info);
+       case H265:
++        return isHardwareSupportedInCurrentSdkH265(info);        
+       case AV1:
+         return false;
+     }
+@@ -230,6 +232,12 @@ public class HardwareVideoEncoderFactory implements VideoEncoderFactory {
+     return name.startsWith(QCOM_PREFIX) || name.startsWith(EXYNOS_PREFIX);
+   }
+ 
++   private boolean isHardwareSupportedInCurrentSdkH265(MediaCodecInfo info) {
++    String name = info.getName();
++    // QCOM and Exynos H264 encoders are always supported.
++    return name.startsWith(QCOM_PREFIX) || name.startsWith(EXYNOS_PREFIX) || name.startsWith(C2_PREFIX);
++  }  
++
+   private boolean isMediaCodecAllowed(MediaCodecInfo info) {
+     if (codecAllowedPredicate == null) {
+       return true;
+diff --git a/sdk/android/api/org/webrtc/SimulcastVideoEncoder.java b/sdk/android/api/org/webrtc/SimulcastVideoEncoder.java
+new file mode 100644
+index 0000000000..43a4e260c7
+--- /dev/null
++++ b/sdk/android/api/org/webrtc/SimulcastVideoEncoder.java
+@@ -0,0 +1,25 @@
++package org.webrtc;
++
++public class SimulcastVideoEncoder extends WrappedNativeVideoEncoder {
++
++    static native long nativeCreateEncoder(long webrtcEnvRef, VideoEncoderFactory primary_factory, VideoCodecInfo codec_info);
++
++    VideoEncoderFactory primary_factory;
++    VideoCodecInfo codec_info;
++
++    public SimulcastVideoEncoder(VideoEncoderFactory primary_factory, VideoCodecInfo codec_info) {
++        this.primary_factory = primary_factory;
++        this.codec_info = codec_info;
++    }
++
++    @Override
++    public long createNative(long webrtcEnvRef) {
++        return nativeCreateEncoder(webrtcEnvRef, primary_factory, codec_info);
++    }
++
++    @Override
++    public boolean isHardwareEncoder() {
++        return false;
++    }
++
++}
+\ No newline at end of file
+diff --git a/sdk/android/api/org/webrtc/SimulcastVideoEncoderFactory.java b/sdk/android/api/org/webrtc/SimulcastVideoEncoderFactory.java
+new file mode 100644
+index 0000000000..bf7127376f
+--- /dev/null
++++ b/sdk/android/api/org/webrtc/SimulcastVideoEncoderFactory.java
+@@ -0,0 +1,32 @@
++package org.webrtc;
++
++import androidx.annotation.Nullable;
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.List;
++import java.util.Arrays;
++ 
++public class SimulcastVideoEncoderFactory implements VideoEncoderFactory {
++ 
++    VideoEncoderFactory primary_factory;
++ 
++    public SimulcastVideoEncoderFactory(VideoEncoderFactory factory) {
++        this.primary_factory = factory;
++    }
++ 
++    @Nullable
++    @Override
++    public VideoEncoder createEncoder(VideoCodecInfo info) {
++        return new SimulcastVideoEncoder(primary_factory, info);
++    }
++ 
++    @Override
++    public VideoCodecInfo[] getSupportedCodecs() {
++        List<VideoCodecInfo> codecs = new ArrayList<VideoCodecInfo>();
++
++        codecs.addAll(Arrays.asList(primary_factory.getSupportedCodecs()));
++
++        return codecs.toArray(new VideoCodecInfo[codecs.size()]);
++    }
++
++}
+\ No newline at end of file
+diff --git a/sdk/android/api/org/webrtc/VideoEncoder.java b/sdk/android/api/org/webrtc/VideoEncoder.java
+index 7c07c82cb9..b6a8316ab1 100644
+--- a/sdk/android/api/org/webrtc/VideoEncoder.java
++++ b/sdk/android/api/org/webrtc/VideoEncoder.java
+@@ -86,6 +86,8 @@ public interface VideoEncoder {
+ 
+   public class CodecSpecificInfoH264 extends CodecSpecificInfo {}
+ 
++  public class CodecSpecificInfoH265 extends CodecSpecificInfo {}
++
+   public class CodecSpecificInfoAV1 extends CodecSpecificInfo {}
+ 
+   /**
+diff --git a/sdk/android/src/java/org/webrtc/HardwareVideoEncoder.java b/sdk/android/src/java/org/webrtc/HardwareVideoEncoder.java
+index 7c6b1a7a90..b584658976 100644
+--- a/sdk/android/src/java/org/webrtc/HardwareVideoEncoder.java
++++ b/sdk/android/src/java/org/webrtc/HardwareVideoEncoder.java
+@@ -46,7 +46,7 @@ class HardwareVideoEncoder implements VideoEncoder {
+   private static final int DEQUEUE_OUTPUT_BUFFER_TIMEOUT_US = 100000;
+ 
+   // Size of the input frames should be multiple of 16 for the H/W encoder.
+-  private static final int REQUIRED_RESOLUTION_ALIGNMENT = 16;
++  private static final int REQUIRED_RESOLUTION_ALIGNMENT = 1;
+ 
+   /**
+    * Keeps track of the number of output buffers that have been passed down the pipeline and not yet
+@@ -272,6 +272,8 @@ class HardwareVideoEncoder implements VideoEncoder {
+         format.setInteger("vendor.google-av1enc.encoding-preset.int32.value", 1);
+       }
+ 
++      // TODO:HEVC Need to get the device's capability and set the Profile/Tier.
++
+       if (isEncodingStatisticsSupported()) {
+         format.setInteger(MediaFormat.KEY_VIDEO_ENCODING_STATISTICS_LEVEL,
+             MediaFormat.VIDEO_ENCODING_STATISTICS_LEVEL_1);
+@@ -507,6 +509,10 @@ class HardwareVideoEncoder implements VideoEncoder {
+         final int kLowH264QpThreshold = 24;
+         final int kHighH264QpThreshold = 37;
+         return new ScalingSettings(kLowH264QpThreshold, kHighH264QpThreshold);
++      } else if (codecType == VideoCodecMimeType.H265) {
++        final int kLowH265QpThreshold = 29;
++        final int kHighH265QpThreshold = 41;
++        return new ScalingSettings(kLowH265QpThreshold, kHighH265QpThreshold);      
+       }
+     }
+     return ScalingSettings.OFF;
+diff --git a/sdk/android/src/java/org/webrtc/MediaCodecUtils.java b/sdk/android/src/java/org/webrtc/MediaCodecUtils.java
+index 5417fec4d4..79e2f33676 100644
+--- a/sdk/android/src/java/org/webrtc/MediaCodecUtils.java
++++ b/sdk/android/src/java/org/webrtc/MediaCodecUtils.java
+@@ -29,6 +29,7 @@ class MediaCodecUtils {
+   static final String INTEL_PREFIX = "OMX.Intel.";
+   static final String NVIDIA_PREFIX = "OMX.Nvidia.";
+   static final String QCOM_PREFIX = "OMX.qcom.";
++  static final String C2_PREFIX = "c2.";
+   static final String[] SOFTWARE_IMPLEMENTATION_PREFIXES = {
+       "OMX.google.", "OMX.SEC.", "c2.android"};
+ 
+@@ -85,6 +86,7 @@ class MediaCodecUtils {
+       case VP8:
+       case VP9:
+       case AV1:
++      // TODO:HEVC Need to get the device's capability and set the Profile/Tier.
+       case H265:
+         return new HashMap<String, String>();
+       case H264:
+diff --git a/sdk/android/src/jni/simulcast_video_encoder.cc b/sdk/android/src/jni/simulcast_video_encoder.cc
+new file mode 100644
+index 0000000000..32613f684d
+--- /dev/null
++++ b/sdk/android/src/jni/simulcast_video_encoder.cc
+@@ -0,0 +1,45 @@
++#include <jni.h>
++
++#include "api/transport/field_trial_based_config.h"
++#include "media/engine/simulcast_encoder_adapter.h"
++#include "rtc_base/logging.h"
++#include "sdk/android/native_api/codecs/wrapper.h"
++#include "sdk/android/src/jni/jni_helpers.h"
++#include "sdk/android/src/jni/video_codec_info.h"
++#include "sdk/android/src/jni/video_encoder_factory_wrapper.h"
++
++using namespace webrtc;
++using namespace webrtc::jni;
++
++#ifdef __cplusplus
++extern "C" {
++#endif
++
++JNIEXPORT jlong JNICALL
++Java_org_webrtc_SimulcastVideoEncoder_nativeCreateEncoder(
++    JNIEnv* env,
++    jclass klass,
++    jlong webrtcEnvRef,
++    jobject primary_factory,
++    jobject info) 
++{
++  auto webrtc_env = reinterpret_cast<const webrtc::Environment*>(webrtcEnvRef);
++  if (!webrtc_env) {
++    RTC_LOG(LS_ERROR) << "Invalid WebRTC environment reference.";
++    return 0;
++  }
++
++  JavaParamRef<jobject> info_ref(env, info);
++  SdpVideoFormat format = VideoCodecInfoToSdpVideoFormat(env, info_ref);
++
++  return NativeToJavaPointer(
++      std::make_unique<SimulcastEncoderAdapter>(
++          *webrtc_env,
++          JavaToNativeVideoEncoderFactory(env, primary_factory).release(),
++          nullptr, format)
++          .release());
++}
++
++#ifdef __cplusplus
++}
++#endif
+\ No newline at end of file
+diff --git a/sdk/android/src/jni/simulcast_video_encoder.h b/sdk/android/src/jni/simulcast_video_encoder.h
+new file mode 100644
+index 0000000000..13d0613391
+--- /dev/null
++++ b/sdk/android/src/jni/simulcast_video_encoder.h
+@@ -0,0 +1,21 @@
++/* DO NOT EDIT THIS FILE - it is machine generated */
++#include <jni.h>
++/* Header for class org_webrtc_SimulcastVideoEncoder */
++
++#ifndef _Included_org_webrtc_SimulcastVideoEncoder
++#define _Included_org_webrtc_SimulcastVideoEncoder
++#ifdef __cplusplus
++extern "C" {
++#endif
++/*
++ * Class:     org_webrtc_SimulcastVideoEncoder
++ * Method:    nativeCreateEncoder
++ * Signature: (JLorg/webrtc/VideoEncoderFactory;Lorg/webrtc/VideoEncoderFactory;Lorg/webrtc/VideoCodecInfo;)J
++ */
++JNIEXPORT jlong JNICALL Java_org_webrtc_SimulcastVideoEncoder_nativeCreateEncoder
++  (JNIEnv *, jclass, jlong, jobject, jobject);
++
++#ifdef __cplusplus
++}
++#endif
++#endif
+\ No newline at end of file
